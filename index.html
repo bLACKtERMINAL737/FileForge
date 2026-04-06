@@ -969,56 +969,6 @@ function mkRI(src,lbl,dlUrl,dlName){
 }
 
 /* ════════ BG REMOVE ════════ */
-let _bgFile=null,_bgBlob=null;
-setupDZ('bgDz','bgFile',f=>{
-  _bgFile=f[0];
-  const u=URL.createObjectURL(_bgFile);
-  const oi=document.getElementById('bgOrig');oi.src=u;oi.style.display='block';
-  document.getElementById('bgRun').disabled=false;
-  st('bgDot','bgMsg','ok',`Loaded: ${_bgFile.name} (${fmtB(_bgFile.size)})`);
-});
-document.getElementById('bgRun').addEventListener('click',async()=>{
-  if(!_bgFile)return;
-  document.getElementById('bgRun').disabled=true;
-  st('bgDot','bgMsg','busy','Detecting background…');
-  try{
-    _bgBlob=await bgRemoveLocal(_bgFile);
-    const u=URL.createObjectURL(_bgBlob);
-    const ri=document.getElementById('bgRes');ri.src=u;ri.style.display='block';
-    const dl=document.getElementById('bgDl');dl.disabled=false;dl.onclick=()=>dlBlob(_bgBlob,'no-bg.png');
-    st('bgDot','bgMsg','ok','Done! Background removed.');toast('Background removed!');
-  }catch(e){st('bgDot','bgMsg','err','Error: '+e.message);toast(e.message,'err');}
-  finally{document.getElementById('bgRun').disabled=false;}
-});
-async function bgRemoveLocal(file){
-  return new Promise(async res=>{
-    const bmp=await createImageBitmap(file);
-    const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;
-    const ctx=c.getContext('2d');ctx.drawImage(bmp,0,0);
-    const id=ctx.getImageData(0,0,c.width,c.height);const d=id.data;const W=c.width,H=c.height;
-    // Sample border pixels to estimate background color
-    const samples=[];
-    for(let x=0;x<W;x+=Math.max(1,Math.floor(W/40)))samples.push([x,0],[x,H-1]);
-    for(let y=0;y<H;y+=Math.max(1,Math.floor(H/40)))samples.push([0,y],[W-1,y]);
-    let rs=0,gs=0,bs=0;
-    samples.forEach(([x,y])=>{const i=(y*W+x)*4;rs+=d[i];gs+=d[i+1];bs+=d[i+2];});
-    const n=samples.length;const br=rs/n,bg=gs/n,bb=bs/n;
-    const thresh=55;const vis=new Uint8Array(W*H);
-    const stack=[];
-    for(let x=0;x<W;x++){stack.push(x);stack.push((H-1)*W+x);}
-    for(let y=0;y<H;y++){stack.push(y*W);stack.push(y*W+(W-1));}
-    while(stack.length){
-      const idx=stack.pop();if(vis[idx])continue;vis[idx]=1;
-      const i=idx*4;
-      if(Math.abs(d[i]-br)>thresh||Math.abs(d[i+1]-bg)>thresh||Math.abs(d[i+2]-bb)>thresh)continue;
-      d[i+3]=0;
-      const x=idx%W,y=Math.floor(idx/W);
-      if(x>0)stack.push(idx-1);if(x<W-1)stack.push(idx+1);if(y>0)stack.push(idx-W);if(y<H-1)stack.push(idx+W);
-    }
-    for(let i=0;i<d.length;i+=4){const dr=Math.abs(d[i]-br),dg=Math.abs(d[i+1]-bg),db=Math.abs(d[i+2]-bb);if(dr<25&&dg<25&&db<25)d[i+3]=0;}
-    ctx.putImageData(id,0,0);c.toBlob(b=>res(b),'image/png');
-  });
-}
 
 /* ════════ IMG RESIZE ════════ */
 let _rzF=[];
