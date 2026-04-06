@@ -3,13 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>FileForge Pro</title>
+<title>FileForge Pro - Local Edition</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.1.1/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════ TOKENS */
 :root{
@@ -81,12 +83,8 @@ body{font-family:var(--fn);background:var(--bg);color:var(--t1);display:flex;min
 .panel{display:none}
 .panel.active{display:block;animation:fadeUp .38s var(--ease) both}
 @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-@keyframes scaleIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
-@keyframes slideRight{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
 @keyframes pop{0%{transform:scale(.85);opacity:0}100%{transform:scale(1);opacity:1}}
-@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%{box-shadow:0 0 0 0 var(--ag)}70%{box-shadow:0 0 0 8px transparent}100%{box-shadow:0 0 0 0 transparent}}
-@keyframes shimmer{0%{opacity:.4}50%{opacity:1}100%{opacity:.4}}
 
 /* ─── HOME ─── */
 .hero{margin-bottom:40px;position:relative}
@@ -211,7 +209,6 @@ textarea::placeholder{color:var(--t3)}
 .pdf-page-thumb.selected .pg-check{opacity:1}
 .pdf-page-thumb .pg-check svg{width:11px;height:11px;stroke:#fff;fill:none;stroke-width:2.5}
 .pdf-page-thumb .pg-num{position:absolute;top:6px;left:6px;font:600 10px var(--fm);background:rgba(0,0,0,.55);color:#fff;padding:2px 6px;border-radius:4px}
-/* Merge draggable */
 .merge-pages-wrap{margin-top:14px}
 .merge-pages-list{display:flex;flex-wrap:wrap;gap:10px}
 .merge-page-item{background:var(--card);border:2px solid var(--b1);border-radius:var(--rm);overflow:hidden;transition:all .2s;position:relative;width:120px;flex-shrink:0}
@@ -299,12 +296,11 @@ svg{display:inline-block;vertical-align:middle}
 <div class="overlay" id="overlay" onclick="closeNav()"></div>
 <div class="toast" id="toast"><svg id="tIco" viewBox="0 0 24 24"></svg><span id="tMsg"></span></div>
 
-<!-- ════════════════════ SIDEBAR ════════════════════ -->
 <nav class="sidebar" id="sidebar">
   <div class="sb-brand">
     <div class="sb-logo"><svg viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></div>
     <span class="sb-title">FileForge</span>
-    <span class="sb-badge">Pro</span>
+    <span class="sb-badge">Local Pro</span>
   </div>
   <div class="sb-search">
     <div class="sb-si">
@@ -320,7 +316,6 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </nav>
 
-<!-- ════════════════════ MAIN ════════════════════ -->
 <div class="main">
   <header class="topbar">
     <button class="tb-menu ico-btn" onclick="toggleNav()"><svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
@@ -335,7 +330,6 @@ svg{display:inline-block;vertical-align:middle}
 
   <div class="content">
 
-<!-- ══ HOME ══ -->
 <div class="panel active" id="p-home">
   <div class="hero">
     <div class="hero-glow"></div>
@@ -358,22 +352,12 @@ svg{display:inline-block;vertical-align:middle}
   <div class="tool-grid" id="gUtils"></div>
 </div>
 
-<!-- ══ BG REMOVE ══ -->
 <div class="panel" id="p-bg-remove">
-  <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p><strong>AI-Powered Background Removal</strong> — Uses Claude AI (via Anthropic API) directly in your browser. Enter your API key below, or use the free local method (color-edge detection). <a href="https://console.anthropic.ic/settings/keys" target="_blank">Get an API key →</a></p></div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="row" style="margin-top:0;align-items:center">
-      <div class="grp" style="flex:1"><div class="lbl">Anthropic API Key (for Claude AI removal)</div><input type="password" class="inp" id="bgApiKey" placeholder="sk-ant-api03-…"/></div>
-      <div class="grp"><div class="lbl">Method</div>
-        <select id="bgMethod"><option value="claude">Claude AI (best)</option><option value="rembg">Remove.bg API</option><option value="local">Local (no key needed)</option></select>
-      </div>
-      <div class="grp" id="bgRembgKeyGrp" style="display:none;flex:1"><div class="lbl">Remove.bg API Key</div><input type="password" class="inp" id="bgRembgKey" placeholder="rm_xxxxxx"/></div>
-    </div>
-  </div>
+  <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p><strong>Local Background Removal</strong> — Uses edge detection and pixel analysis directly in your browser. Fully private.</p></div>
   <div class="dz" id="bgDz"><input type="file" id="bgFile" accept="image/*"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
     <div class="dz-t">Drop image to remove background</div>
-    <div class="dz-s">PNG, JPG, WEBP · AI-powered edge detection</div>
+    <div class="dz-s">PNG, JPG, WEBP · Zero uploads</div>
     <div class="chips"><span class="chip">PNG</span><span class="chip">JPG</span><span class="chip">WEBP</span></div>
   </div>
   <div class="row">
@@ -387,7 +371,6 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-<!-- ══ IMG RESIZE ══ -->
 <div class="panel" id="p-img-resize">
   <div class="dz" id="rzDz"><input type="file" id="rzFile" accept="image/*" multiple/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg></div>
@@ -406,7 +389,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="results" id="rzResults"></div>
 </div>
 
-<!-- ══ IMG CONVERT ══ -->
 <div class="panel" id="p-img-convert">
   <div class="dz" id="icDz"><input type="file" id="icFile" accept="image/*" multiple/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
@@ -422,7 +404,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="results" id="icResults"></div>
 </div>
 
-<!-- ══ IMG CROP ══ -->
 <div class="panel" id="p-img-crop">
   <div class="dz" id="cropDz"><input type="file" id="cropFile" accept="image/*"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="6 2 6 8 2 8"/><polyline points="18 22 18 16 22 16"/><path d="M6 8H2v14h14v-4"/><path d="M18 16h4V2H8v4"/></svg></div>
@@ -444,7 +425,6 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-<!-- ══ IMG FILTERS ══ -->
 <div class="panel" id="p-img-filters">
   <div class="dz" id="fltDz"><input type="file" id="fltFile" accept="image/*"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/></svg></div>
@@ -481,7 +461,6 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-<!-- ══ IMG COMPRESS ══ -->
 <div class="panel" id="p-img-compress">
   <div class="dz" id="icmpDz"><input type="file" id="icmpFile" accept="image/*" multiple/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg></div>
@@ -497,7 +476,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="results" id="icmpResults"></div>
 </div>
 
-<!-- ══ IMG ROTATE ══ -->
 <div class="panel" id="p-img-rotate">
   <div class="dz" id="imgrotDz"><input type="file" id="imgrotFile" accept="image/*"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>
@@ -514,42 +492,26 @@ svg{display:inline-block;vertical-align:middle}
   <div class="card" style="margin-top:14px"><div class="card-t">Preview</div><canvas id="imgrotC" style="max-width:100%;max-height:400px;border-radius:10px;display:block;margin:auto"></canvas></div>
 </div>
 
-<!-- ══ IMG TO TEXT ══ -->
 <div class="panel" id="p-img-text">
-  <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p><strong>Image to Text (OCR via Claude AI)</strong> — Upload a photo of a document, receipt, screenshot or handwritten text. Claude AI reads and extracts all text. Requires Anthropic API key.</p></div>
-  <div class="card" style="margin-bottom:14px">
-    <div class="row" style="margin-top:0">
-      <div class="grp" style="flex:1"><div class="lbl">Anthropic API Key</div><input type="password" class="inp" id="i2tKey" placeholder="sk-ant-api03-…"/></div>
-      <div class="grp"><div class="lbl">Task</div>
-        <select id="i2tTask">
-          <option value="extract">Extract all text (OCR)</option>
-          <option value="table">Extract as table/CSV</option>
-          <option value="handwriting">Handwriting recognition</option>
-          <option value="describe">Describe image content</option>
-          <option value="receipt">Parse receipt/invoice</option>
-        </select>
-      </div>
-    </div>
-  </div>
+  <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p><strong>Image to Text (Local OCR)</strong> — Uses Tesseract.js directly in your browser to extract text from images. No data is sent to any server.</p></div>
   <div class="dz" id="i2tDz"><input type="file" id="i2tFile" accept="image/*"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div>
-    <div class="dz-t">Drop image for AI text extraction</div>
-    <div class="dz-s">Photos, screenshots, documents, receipts, handwriting</div>
-    <div class="chips"><span class="chip">OCR</span><span class="chip">Claude AI</span><span class="chip">Handwriting</span></div>
+    <div class="dz-t">Drop image for local text extraction</div>
+    <div class="dz-s">Photos, screenshots, documents</div>
+    <div class="chips"><span class="chip">Local OCR</span><span class="chip">Tesseract.js</span></div>
   </div>
   <div class="row">
     <button class="btn btn-p" id="i2tBtn" disabled><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>Extract Text</button>
     <button class="btn btn-s" id="i2tDl" disabled><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save TXT</button>
     <button class="btn btn-g" id="i2tCopy" disabled><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Copy</button>
   </div>
-  <div class="status"><div class="sdot" id="i2tDot"></div><div id="i2tMsg">Upload image and enter API key</div></div>
+  <div class="status"><div class="sdot" id="i2tDot"></div><div id="i2tMsg">Upload an image</div></div>
   <div class="two-col" style="margin-top:14px">
-    <div class="card"><div class="card-t">Image Preview</div><img id="i2tPreview" style="max-width:100%;max-height:300px;border-radius:10px;display:none;margin:auto;display:none"/></div>
-    <div class="card"><div class="card-t">Extracted Text</div><div class="img2txt-result" id="i2tResult">AI-extracted text will appear here…</div></div>
+    <div class="card"><div class="card-t">Image Preview</div><img id="i2tPreview" style="max-width:100%;max-height:300px;border-radius:10px;margin:auto;display:none"/></div>
+    <div class="card"><div class="card-t">Extracted Text</div><div class="img2txt-result" id="i2tResult">Locally extracted text will appear here…</div></div>
   </div>
 </div>
 
-<!-- ══ PDF → JPG ══ -->
 <div class="panel" id="p-pdf-jpg">
   <div class="dz" id="p2jDz"><input type="file" id="p2jFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><rect x="8" y="13" width="8" height="5" rx="1"/></svg></div>
@@ -566,7 +528,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="results" id="p2jResults"></div>
 </div>
 
-<!-- ══ PDF → PNG ══ -->
 <div class="panel" id="p-pdf-png">
   <div class="dz" id="p2pDz"><input type="file" id="p2pFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
@@ -582,7 +543,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="results" id="p2pResults"></div>
 </div>
 
-<!-- ══ PDF → TXT ══ -->
 <div class="panel" id="p-pdf-txt">
   <div class="dz" id="p2tDz"><input type="file" id="p2tFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
@@ -598,7 +558,6 @@ svg{display:inline-block;vertical-align:middle}
   <textarea id="p2tOut" placeholder="Extracted text appears here…" readonly style="margin-top:16px;min-height:300px"></textarea>
 </div>
 
-<!-- ══ PDF SPLIT ══ -->
 <div class="panel" id="p-pdf-split">
   <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Click page thumbnails to select/deselect pages for splitting. Pages are shown visually so you know exactly what you're splitting.</p></div>
   <div class="dz" id="pspDz"><input type="file" id="pspFile" accept=".pdf"/>
@@ -623,16 +582,14 @@ svg{display:inline-block;vertical-align:middle}
   </div>
   <div class="status"><div class="sdot" id="pspDot"></div><div id="pspMsg">Load a PDF to see page thumbnails</div></div>
   <div class="prog" id="pspProg"><div class="pbar" id="pspBar"></div></div>
-  <!-- Page thumbnail grid -->
   <div id="pspThumbWrap" style="margin-top:14px">
     <div class="pdf-pages-grid" id="pspThumbs"></div>
   </div>
   <div class="file-list" id="pspList"></div>
 </div>
 
-<!-- ══ PDF MERGE ══ -->
 <div class="panel" id="p-pdf-merge">
-  <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Add multiple PDFs. Each file's pages are shown as thumbnails so you can see exactly what you're merging. Drag files to reorder.</p></div>
+  <div class="notice"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><p>Add multiple PDFs. Each file's pages are shown as thumbnails so you can see exactly what you're merging.</p></div>
   <div class="dz" id="pmgDz"><input type="file" id="pmgFile" accept=".pdf" multiple/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
     <div class="dz-t">Drop multiple PDFs to merge</div><div class="dz-s">Pages shown visually for each file</div>
@@ -646,7 +603,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="status"><div class="sdot" id="pmgDot"></div><div id="pmgMsg">Add 2+ PDFs to merge</div></div>
 </div>
 
-<!-- ══ PDF COMPRESS ══ -->
 <div class="panel" id="p-pdf-compress">
   <div class="dz" id="pcompDz"><input type="file" id="pcompFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="14" y1="10" x2="21" y2="3"/><line x1="3" y1="21" x2="10" y2="14"/></svg></div>
@@ -661,7 +617,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="prog" id="pcompProg"><div class="pbar" id="pcompBar"></div></div>
 </div>
 
-<!-- ══ PDF INVERT ══ -->
 <div class="panel" id="p-pdf-invert">
   <div class="dz" id="pinvDz"><input type="file" id="pinvFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2v20"/><path d="M12 2a10 10 0 0 1 0 20z"/></svg></div>
@@ -676,7 +631,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="cv-grid" id="pinvPrev"></div>
 </div>
 
-<!-- ══ PDF WATERMARK ══ -->
 <div class="panel" id="p-pdf-edit">
   <div class="dz" id="peditDz"><input type="file" id="peditFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
@@ -693,7 +647,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="status"><div class="sdot" id="peditDot"></div><div id="peditMsg">Load a PDF</div></div>
 </div>
 
-<!-- ══ PDF ROTATE ══ -->
 <div class="panel" id="p-pdf-rotate">
   <div class="dz" id="protDz"><input type="file" id="protFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></div>
@@ -708,7 +661,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="status"><div class="sdot" id="protDot"></div><div id="protMsg">Load a PDF</div></div>
 </div>
 
-<!-- ══ PDF METADATA ══ -->
 <div class="panel" id="p-pdf-protect">
   <div class="dz" id="pprtDz"><input type="file" id="pprtFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
@@ -724,7 +676,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="status"><div class="sdot" id="pprtDot"></div><div id="pprtMsg">Load a PDF</div></div>
 </div>
 
-<!-- ══ E-SIGNATURE ══ -->
 <div class="panel" id="p-pdf-sign">
   <div class="sig-wrap">
     <div class="card-t">Step 1 — Draw Signature</div>
@@ -748,7 +699,6 @@ svg{display:inline-block;vertical-align:middle}
   <div class="status"><div class="sdot" id="signDot"></div><div id="signMsg">Draw signature then load PDF</div></div>
 </div>
 
-<!-- ══ OCR ══ -->
 <div class="panel" id="p-pdf-ocr">
   <div class="dz" id="ocrDz"><input type="file" id="ocrFile" accept=".pdf"/>
     <div class="dz-ico"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
@@ -764,21 +714,18 @@ svg{display:inline-block;vertical-align:middle}
   <textarea id="ocrOut" placeholder="Extracted text…" readonly style="margin-top:16px;min-height:260px"></textarea>
 </div>
 
-<!-- ══ PDF→EXCEL ══ -->
 <div class="panel" id="p-pdf-excel">
   <div class="dz" id="p2eDz"><input type="file" id="p2eFile" accept=".pdf"/><div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/></svg></div><div class="dz-t">PDF to Excel</div><div class="dz-s">Extract text data into spreadsheet rows</div></div>
   <div class="row"><button class="btn btn-p" id="p2eBtn" disabled><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>Extract</button><button class="btn btn-s" id="p2eDl" disabled><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>XLSX</button></div>
   <div class="status"><div class="sdot" id="p2eDot"></div><div id="p2eMsg">Load a PDF</div></div>
 </div>
 
-<!-- ══ PDF→HTML ══ -->
 <div class="panel" id="p-pdf-html">
   <div class="dz" id="p2hDz"><input type="file" id="p2hFile" accept=".pdf"/><div class="dz-ico"><svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></div><div class="dz-t">PDF to HTML</div></div>
   <div class="row"><button class="btn btn-p" id="p2hBtn" disabled><svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>Convert</button><button class="btn btn-s" id="p2hDl" disabled><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>HTML</button></div>
   <div class="status"><div class="sdot" id="p2hDot"></div><div id="p2hMsg">Load a PDF</div></div>
 </div>
 
-<!-- ══ HTML→PDF ══ -->
 <div class="panel" id="p-html-pdf">
   <div class="card-t">Paste HTML content below</div>
   <textarea id="h2pArea" placeholder="<h1>Hello World</h1>…" style="min-height:260px;margin-top:8px"></textarea>
@@ -786,14 +733,12 @@ svg{display:inline-block;vertical-align:middle}
   <div class="status"><div class="sdot" id="h2pDot"></div><div id="h2pMsg">Paste HTML and click print</div></div>
 </div>
 
-<!-- ══ EXCEL→PDF ══ -->
 <div class="panel" id="p-excel-pdf">
   <div class="dz" id="e2pDz"><input type="file" id="e2pFile" accept=".xlsx,.xls,.csv"/><div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="dz-t">Excel / CSV to PDF</div></div>
   <div class="row"><button class="btn btn-p" id="e2pBtn" disabled><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>Open Print Dialog</button></div>
   <div class="status"><div class="sdot" id="e2pDot"></div><div id="e2pMsg">Load spreadsheet</div></div>
 </div>
 
-<!-- ══ PDF→SLIDES ══ -->
 <div class="panel" id="p-pdf-ppt">
   <div class="dz" id="p2ptDz"><input type="file" id="p2ptFile" accept=".pdf"/><div class="dz-ico"><svg viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div class="dz-t">PDF Pages to Slide Images</div><div class="dz-s">High-res JPG per page · import into PowerPoint</div></div>
   <div class="row">
@@ -805,20 +750,17 @@ svg{display:inline-block;vertical-align:middle}
   <div class="prog" id="p2ptProg"><div class="pbar" id="p2ptBar"></div></div>
 </div>
 
-<!-- ══ QR ══ -->
 <div class="panel" id="p-qr-gen">
   <div class="card">
     <div class="row" style="margin-top:0">
       <div class="grp" style="flex:1"><div class="lbl">Content (URL, text, phone, email…)</div><input type="text" class="inp" id="qrText" placeholder="https://example.com" onkeydown="if(event.key==='Enter')genQR()"/></div>
       <div class="grp"><div class="lbl">Size</div><select id="qrSize"><option value="150">Small</option><option value="300" selected>Medium</option><option value="500">Large</option><option value="800">XL</option></select></div>
-      <div class="grp"><div class="lbl">Margin</div><select id="qrMg"><option value="0">None</option><option value="10" selected>Small</option><option value="20">Large</option></select></div>
       <button class="btn btn-p" onclick="genQR()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/></svg>Generate</button>
     </div>
   </div>
   <div id="qrOutput"><svg viewBox="0 0 24 24" style="width:52px;height:52px;stroke:var(--t3);fill:none;stroke-width:1"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="16" width="5" height="5" rx="1"/><rect x="7" y="7" width="2" height="2"/><rect x="16" y="16" width="5" height="5" rx="1"/></svg><p style="color:var(--t3);font-size:13px">QR code appears here</p></div>
 </div>
 
-<!-- ══ COLOR PICKER ══ -->
 <div class="panel" id="p-color-pick">
   <div class="card">
     <div class="row" style="margin-top:0;align-items:center">
@@ -837,7 +779,6 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-<!-- ══ TEXT TOOLS ══ -->
 <div class="panel" id="p-text-tools">
   <div class="tabs" id="ttTabs">
     <button class="tab on" onclick="switchTT('case',this)">Case</button>
@@ -862,7 +803,6 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-<!-- ══ BASE64 ══ -->
 <div class="panel" id="p-base64">
   <div class="tabs">
     <button class="tab on" onclick="b64Switch('enc',this)">Text→Base64</button>
@@ -874,7 +814,6 @@ svg{display:inline-block;vertical-align:middle}
   <div id="b64FilePanel" style="display:none"><div class="dz" style="margin-bottom:12px"><input type="file" id="b64FileIn" onchange="encB64File(this.files[0])"/><div class="dz-ico"><svg viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg></div><div class="dz-t">Drop any file to encode</div></div><textarea id="b64FileO" readonly style="min-height:180px" placeholder="Base64 output…"></textarea><div class="row"><button class="btn btn-g btn-sm" onclick="navigator.clipboard.writeText(b64FileO.value).then(()=>showToast('Copied!','ok'))">Copy</button></div></div>
 </div>
 
-<!-- ══ HASH ══ -->
 <div class="panel" id="p-hash">
   <div class="card" style="margin-bottom:14px"><div class="lbl" style="margin-bottom:8px">Input Text</div><textarea id="hashIn" placeholder="Enter text to hash…" style="min-height:130px" oninput="genHash()"></textarea></div>
   <div class="three-col">
@@ -884,24 +823,21 @@ svg{display:inline-block;vertical-align:middle}
   </div>
 </div>
 
-  </div><!-- /content -->
-</div><!-- /main -->
-
-<script>
+  </div></div><script>
 'use strict';
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
 /* ═══════════ TOOL REGISTRY ═══════════ */
 const TOOLS={
   img:[
-    {id:'bg-remove',  i:'shield',      n:'BG Remover',     d:'AI background removal'},
+    {id:'bg-remove',  i:'shield',      n:'BG Remover',     d:'Local background removal'},
     {id:'img-resize', i:'maximize-2',  n:'Resize',          d:'Batch resize images'},
     {id:'img-convert',i:'refresh-cw',  n:'Convert Format',  d:'PNG/JPG/WEBP'},
     {id:'img-crop',   i:'crop',        n:'Crop',            d:'Crop to dimensions'},
     {id:'img-filters',i:'sliders',     n:'Filters',         d:'Pro image filters'},
     {id:'img-compress',i:'minimize-2', n:'Compress',        d:'Reduce file sizes'},
     {id:'img-rotate', i:'rotate-cw',   n:'Rotate & Flip',   d:'Transform images'},
-    {id:'img-text',   i:'scan-text',   n:'Image → Text',    d:'AI OCR extraction',  badge:'NEW'}
+    {id:'img-text',   i:'scan-text',   n:'Image → Text',    d:'Local OCR extraction',  badge:'NEW'}
   ],
   pdf:[
     {id:'pdf-jpg',    i:'file-image',  n:'PDF → JPG',       d:'Pages to JPG'},
@@ -925,7 +861,7 @@ const TOOLS={
     {id:'pdf-ppt',    i:'monitor',     n:'PDF → Slides',    d:'Pages to images'}
   ],
   utils:[
-    {id:'qr-gen',     i:'qr-code',     n:'QR Generator',    d:'Create QR codes'},
+    {id:'qr-gen',     i:'qr-code',     n:'QR Generator',    d:'Create QR codes locally'},
     {id:'color-pick', i:'droplets',    n:'Color Picker',    d:'Pick & convert'},
     {id:'text-tools', i:'type',        n:'Text Tools',      d:'Transform text'},
     {id:'base64',     i:'code-2',      n:'Base64',          d:'Encode & decode'},
@@ -1010,7 +946,13 @@ function showToast(msg,type='ok'){
   clearTimeout(t._t); t._t=setTimeout(()=>t.classList.remove('show'),2800);
 }
 function st(d,m,s,msg){const dd=document.getElementById(d),mm=document.getElementById(m); if(dd)dd.className='sdot '+s; if(mm)mm.textContent=msg;}
-function dlBlob(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);}
+function dlBlob(blob,name){
+  if(typeof blob === 'string') { // If it's a dataURL directly
+      const a = document.createElement('a'); a.href = blob; a.download = name; a.click();
+  } else {
+      const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),3000);
+  }
+}
 function dlTxt(txt,name='out.txt'){dlBlob(new Blob([txt],{type:'text/plain'}),name);}
 function setP(id,pct){const w=document.getElementById(id+'Prog'),b=document.getElementById(id+'Bar'); if(!w||!b)return; w.classList.add('show');b.style.width=pct+'%'; if(pct>=100)setTimeout(()=>w.classList.remove('show'),1200);}
 function setupDZ(dzId,fiId,cb){
@@ -1033,9 +975,6 @@ function makeRI(src,lbl,dlUrl,dlName){
 }
 
 /* ═══════════ BG REMOVE ═══════════ */
-document.getElementById('bgMethod').addEventListener('change',function(){
-  document.getElementById('bgRembgKeyGrp').style.display=this.value==='rembg'?'flex':'none';
-});
 let _bgFile=null,_bgBlob=null;
 setupDZ('bgDz','bgFile',f=>{
   _bgFile=f[0];
@@ -1046,24 +985,10 @@ setupDZ('bgDz','bgFile',f=>{
 });
 document.getElementById('bgRunBtn').addEventListener('click',async()=>{
   if(!_bgFile) return;
-  const method=document.getElementById('bgMethod').value;
   document.getElementById('bgRunBtn').disabled=true;
-  st('bgDot','bgMsg','busy','Processing…');
+  st('bgDot','bgMsg','busy','Processing locally…');
   try{
-    if(method==='claude'){
-      const key=document.getElementById('bgApiKey').value.trim();
-      if(!key){showToast('Enter Anthropic API key','err');st('bgDot','bgMsg','err','API key required');document.getElementById('bgRunBtn').disabled=false;return;}
-      _bgBlob=await bgRemoveClaude(_bgFile,key);
-    } else if(method==='rembg'){
-      const key=document.getElementById('bgRembgKey').value.trim();
-      if(!key){showToast('Enter Remove.bg API key','err');st('bgDot','bgMsg','err','API key required');document.getElementById('bgRunBtn').disabled=false;return;}
-      const fd=new FormData(); fd.append('image_file',_bgFile); fd.append('size','auto');
-      const res=await fetch('https://api.remove.bg/v1.0/removebg',{method:'POST',headers:{'X-Api-Key':key},body:fd});
-      if(!res.ok){const e=await res.json();throw new Error(e.errors?.[0]?.title||'Remove.bg error');}
-      _bgBlob=await res.blob();
-    } else {
-      _bgBlob=await bgRemoveLocal(_bgFile);
-    }
+    _bgBlob=await bgRemoveLocal(_bgFile);
     const u=URL.createObjectURL(_bgBlob);
     const ri=document.getElementById('bgResImg'); ri.src=u; ri.style.display='block';
     const dl=document.getElementById('bgDlBtn'); dl.disabled=false; dl.onclick=()=>dlBlob(_bgBlob,'no-bg.png');
@@ -1071,20 +996,6 @@ document.getElementById('bgRunBtn').addEventListener('click',async()=>{
   }catch(e){st('bgDot','bgMsg','err','Error: '+e.message);showToast(e.message,'err');}
   finally{document.getElementById('bgRunBtn').disabled=false;}
 });
-
-async function bgRemoveClaude(file,apiKey){
-  // Convert image to base64
-  const b64=await new Promise(res=>{const r=new FileReader();r.onload=ev=>res(ev.target.result.split(',')[1]);r.readAsDataURL(file);});
-  const mt=file.type||'image/jpeg';
-  const payload={model:'claude-opus-4-5',max_tokens:100,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:mt,data:b64}},{type:'text',text:'Does this image have a clear background that can be removed? Reply with only YES or NO.'}]}]};
-  // We use Claude to analyze, then do local smart removal
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify(payload)});
-    if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error');}
-  }catch(e){}
-  // Enhanced local removal with multi-color detection
-  return bgRemoveEnhanced(file);
-}
 
 async function bgRemoveLocal(file){return bgRemoveEnhanced(file);}
 
@@ -1258,39 +1169,28 @@ document.getElementById('imgFH').onclick=()=>{_irFH=!_irFH;renderIR();};
 document.getElementById('imgFV').onclick=()=>{_irFV=!_irFV;renderIR();};
 document.getElementById('imgrotDl').onclick=()=>{document.getElementById('imgrotC').toBlob(b=>dlBlob(b,'transformed.png'),'image/png');showToast('Saved!');};
 
-/* ═══════════ IMAGE TO TEXT (Claude AI) ═══════════ */
-let _i2tFile=null,_i2tB64=null,_i2tResult='';
+/* ═══════════ IMAGE TO TEXT (Local OCR with Tesseract.js) ═══════════ */
+let _i2tFile=null,_i2tResult='';
 setupDZ('i2tDz','i2tFile',f=>{
   _i2tFile=f[0];
   const u=URL.createObjectURL(_i2tFile);
   const pr=document.getElementById('i2tPreview');pr.src=u;pr.style.display='block';
-  // read base64
-  const rd=new FileReader();rd.onload=ev=>{_i2tB64=ev.target.result.split(',')[1];};rd.readAsDataURL(_i2tFile);
   i2tBtn.disabled=false;st('i2tDot','i2tMsg','ok','Image loaded — click Extract Text');
 });
 document.getElementById('i2tBtn').addEventListener('click',async()=>{
-  const key=document.getElementById('i2tKey').value.trim();
-  if(!key){showToast('Enter Anthropic API key','err');return;}
-  if(!_i2tB64){showToast('Load an image first','err');return;}
-  i2tBtn.disabled=true;st('i2tDot','i2tMsg','busy','Claude AI is reading the image…');
-  const task=document.getElementById('i2tTask').value;
-  const prompts={
-    extract:'Please extract ALL text from this image exactly as it appears. Preserve formatting, line breaks and spacing. Output only the extracted text, nothing else.',
-    table:'Extract all tabular data from this image. Format as clean CSV with proper headers. Output only CSV data.',
-    handwriting:'This image contains handwriting. Please transcribe every word as accurately as possible. Output only the transcribed text.',
-    describe:'Describe everything you see in this image in detail: objects, text, colors, layout, and context.',
-    receipt:'Parse this receipt/invoice. Extract: store name, date, all items with prices, subtotal, taxes, and total. Format as structured text.'
-  };
+  if(!_i2tFile){showToast('Load an image first','err');return;}
+  i2tBtn.disabled=true;st('i2tDot','i2tMsg','busy','Tesseract.js is extracting text locally (this may take a moment)…');
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-opus-4-5',max_tokens:4096,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:_i2tFile.type||'image/jpeg',data:_i2tB64}},{type:'text',text:prompts[task]}]}]})});
-    if(!res.ok){const e=await res.json();throw new Error(e.error?.message||'API error');}
-    const data=await res.json();
-    _i2tResult=data.content.map(c=>c.text||'').join('');
-    document.getElementById('i2tResult').textContent=_i2tResult;
+    const result = await Tesseract.recognize(_i2tFile, 'eng');
+    _i2tResult = result.data.text;
+    document.getElementById('i2tResult').textContent = _i2tResult || 'No text found.';
     i2tDl.disabled=false;i2tCopy.disabled=false;
     st('i2tDot','i2tMsg','ok','Extraction complete!');showToast('Text extracted!');
-  }catch(e){st('i2tDot','i2tMsg','err',e.message);showToast(e.message,'err');}
-  finally{i2tBtn.disabled=false;}
+  }catch(e){
+    st('i2tDot','i2tMsg','err',e.message);showToast('OCR failed','err');
+  }finally{
+    i2tBtn.disabled=false;
+  }
 });
 document.getElementById('i2tDl').onclick=()=>dlTxt(_i2tResult,'extracted.txt');
 document.getElementById('i2tCopy').onclick=()=>navigator.clipboard.writeText(_i2tResult).then(()=>showToast('Copied!'));
@@ -1614,12 +1514,62 @@ setupDZ('p2ptDz','p2ptFile',async f=>{
   p2ptBtn.disabled=false;st('p2ptDot','p2ptMsg','ok','PDF loaded');
 });
 
-/* ═══════════ QR ═══════════ */
-function genQR(){
-  const txt=document.getElementById('qrText').value.trim();if(!txt){showToast('Enter content first','err');return;}
-  const sz=document.getElementById('qrSize').value,mg=document.getElementById('qrMg').value;
-  const url=`https://api.qrserver.com/v1/create-qr-code/?size=${sz}x${sz}&data=${encodeURIComponent(txt)}&margin=${mg}&ecc=M`;
-  document.getElementById('qrOutput').innerHTML=`<div style="text-align:center"><img src="${url}" style="border-radius:12px;box-shadow:var(--sh);max-width:${sz}px;width:100%;animation:pop .3s var(--ease)"/><div style="margin-top:14px;display:flex;gap:8px;justify-content:center"><a href="${url}" download="qr.png" class="btn btn-p" style="text-decoration:none">${mkSvg('minimize-2')} Download</a></div></div>`;
+/* ═══════════ QR GENERATOR (Local) ═══════════ */
+function genQR() {
+  const txt = document.getElementById('qrText').value.trim();
+  if (!txt) { showToast('Enter content first', 'err'); return; }
+  const sz = parseInt(document.getElementById('qrSize').value);
+  const out = document.getElementById('qrOutput');
+  
+  // Clear previous output
+  out.innerHTML = '';
+  
+  // Style wrapper
+  const wrap = document.createElement('div');
+  wrap.style.textAlign = 'center';
+  wrap.style.background = '#ffffff'; // Ensure high contrast for QR scanning
+  wrap.style.padding = '14px';
+  wrap.style.borderRadius = '12px';
+  wrap.style.boxShadow = 'var(--sh)';
+  wrap.style.animation = 'pop .3s var(--ease)';
+  wrap.style.display = 'inline-block';
+  
+  // Generate QR Code using the loaded CDN library
+  const qrDiv = document.createElement('div');
+  new QRCode(qrDiv, {
+      text: txt,
+      width: sz,
+      height: sz,
+      colorDark : "#000000",
+      colorLight : "#ffffff",
+      correctLevel : QRCode.CorrectLevel.M
+  });
+  
+  wrap.appendChild(qrDiv);
+  out.appendChild(wrap);
+
+  // Allow download
+  setTimeout(() => {
+    const canvas = qrDiv.querySelector('canvas');
+    if (canvas) {
+      const btnWrap = document.createElement('div');
+      btnWrap.style.marginTop = '14px';
+      btnWrap.style.display = 'flex';
+      btnWrap.style.justifyContent = 'center';
+      
+      const btn = document.createElement('button');
+      btn.className = 'btn btn-p';
+      btn.innerHTML = `${mkSvg('minimize-2')} Download`;
+      btn.onclick = () => {
+          const dataURL = canvas.toDataURL('image/png');
+          dlBlob(dataURL, 'qr-code.png');
+          showToast('Downloaded!');
+      };
+      
+      btnWrap.appendChild(btn);
+      wrap.appendChild(btnWrap);
+    }
+  }, 100);
 }
 
 /* ═══════════ COLOR PICKER ═══════════ */
